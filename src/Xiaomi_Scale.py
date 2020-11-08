@@ -28,9 +28,8 @@ USER2_DOB = os.getenv('USER2_DOB', '1988-10-20')  # DOB (in yyyy-mm-dd format)
 class ScanProcessor:
 	def __init__(self):
 		self.connected = False
-		self._start_client()
 
-	def GetAge(self, d1):
+	def getAge(self, d1):
 		d1 = datetime.strptime(d1, "%Y-%m-%d")
 		d2 = datetime.strptime(datetime.today().strftime('%Y-%m-%d'),'%Y-%m-%d')
 		return abs((d2 - d1).days)/365
