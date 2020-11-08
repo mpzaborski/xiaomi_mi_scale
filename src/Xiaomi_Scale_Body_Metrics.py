@@ -1,8 +1,7 @@
 from math import floor
 
-# Reverse engineered from the Mi Body Composition Scale's library, could also be used on some other scales such as iHealth
 
-class bodyMetrics:
+class BodyMetrics:
     def __init__(self, weight, height, age, sex, impedance):
         self.weight = weight
         self.height = height
