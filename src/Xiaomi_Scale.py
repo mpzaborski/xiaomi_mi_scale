@@ -21,6 +21,9 @@ USER2_NAME = os.getenv('USER2_NAME', 'Ania')
 USER2_HEIGHT = int(os.getenv('USER2_HEIGHT', '170'))  # Height (in cm)
 USER2_DOB = os.getenv('USER2_DOB', '1988-10-20')  # DOB (in yyyy-mm-dd format)
 
+LBS = "03"
+KG = "02"
+
 
 class ScanProcessor:
     def __init__(self):
@@ -36,27 +39,25 @@ def getAge(d1):
     return abs((d2 - d1).days)/365
 
 
-def get_scale_data(sdid, desc, data):
+def get_scale_data(sdid, data):
     ### Xiaomi V2 Scale ###
     if data.startswith('1b18') and sdid == 22:
-print('miscale')
         measunit = data[4:6]
         measured = int((data[28:30] + data[26:28]), 16) * 0.01
-        unit = ''
+        if measunit == LBS:
+            pass
+        elif measunit == KG:
+            measured = measured / 2
+        else:
+            raise Exception("Scale is sleeping")
 
-        if measunit == "03": unit = 'lbs'
-        if measunit == "02": unit = 'kg' ; measured = measured / 2
         mitdatetime = datetime.strptime(str(int((data[10:12] + data[8:10]), 16)) + " " + str(int((data[12:14]), 16)) +" "+ str(int((data[14:16]), 16)) +" "+ str(int((data[16:18]), 16)) +" "+ str(int((data[18:20]), 16)) +" "+ str(int((data[20:22]), 16)), "%Y %m %d %H %M %S")
         miimpedance = str(int((data[24:26] + data[22:24]), 16))
 
-        if unit:
-            print('')
-            _publish(round(measured, 2), unit, str(mitdatetime), miimpedance)
-        else:
-            print("Scale is sleeping.")
+        return _evaluate_body_parameters(round(measured, 2), str(mitdatetime), miimpedance)
 
 
-def _publish(weight, unit, mitdatetime, miimpedance):
+def _evaluate_body_parameters(weight, mitdatetime, miimpedance):
     if int(weight) > USER1_GT:
         user = USER1_NAME
         height = USER1_HEIGHT
@@ -67,22 +68,9 @@ def _publish(weight, unit, mitdatetime, miimpedance):
         height = USER2_HEIGHT
         age = getAge(USER2_DOB)
         sex = USER2_SEX
-    lib = BodyMetrics(weight, height, age, sex, 0)
-    message = '{'
-    message += '"Weight":"' + "{:.2f}".format(weight) + '"'
-    message += ',"BMI":"' + "{:.2f}".format(lib.getBMI()) + '"'
-    message += ',"Basal Metabolism":"' + "{:.2f}".format(lib.getBMR()) + '"'
-    message += ',"Visceral Fat":"' + "{:.2f}".format(lib.getVisceralFat()) + '"'
-
-    if miimpedance:
-        lib = BodyMetrics(weight, height, age, sex, int(miimpedance))
-        message += ',"Lean Body Mass":"' + "{:.2f}".format(lib.getLBMCoefficient()) + '"'
-        message += ',"Body Fat":"' + "{:.2f}".format(lib.getFatPercentage()) + '"'
-        message += ',"Water":"' + "{:.2f}".format(lib.getWaterPercentage()) + '"'
-        message += ',"Bone Mass":"' + "{:.2f}".format(lib.getBoneMass()) + '"'
-        message += ',"Muscle Mass":"' + "{:.2f}".format(lib.getMuscleMass()) + '"'
-        message += ',"Protein":"' + "{:.2f}".format(lib.getProteinPercentage()) + '"'
-
-    message += ',"TimeStamp":"' + mitdatetime + '"'
-    message += '}'
-    return '\tUser data %s: %s' % ('/' + user + '/weight', message)
+    lib = BodyMetrics(weight, height, age, sex, miimpedance)
+    parameters = {"user": user, "weight": weight, "bmi": lib.getBMI(), "basal_metabolism": lib.getBMR(),
+                  "visceral_fat": lib.getVisceralFat(), "lean_body_mass": lib.getLBMCoefficient(),
+                  "body_fat": lib.getFatPercentage(), "water": lib.getWaterPercentage(), "bone_mass": lib.getBoneMass(),
+                  "muscle_mass": lib.getMuscleMass(), "protein": lib.getProteinPercentage(), "timestamp": mitdatetime}
+    return parameters
