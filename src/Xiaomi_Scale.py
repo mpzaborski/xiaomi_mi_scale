@@ -15,7 +15,8 @@ USER1_NAME = os.getenv('USER1_NAME', 'Mateusz')
 USER1_HEIGHT = int(os.getenv('USER1_HEIGHT', '177'))  # Height (in cm)
 USER1_DOB = os.getenv('USER1_DOB', '1988-09-30')  # DOB (in yyyy-mm-dd format)
 
-USER2_LT = int(os.getenv('USER2_LT', '65'))  # If the weight is greater than this number, we're weighing User #2
+USER2_LT = int(os.getenv('USER2_LT', '69'))  # If the weight is greater than this number, we're weighing User #2
+USER2_GT = int(os.getenv('USER2_GT', '50'))
 USER2_SEX = os.getenv('USER2_SEX', 'female')
 USER2_NAME = os.getenv('USER2_NAME', 'Ania')
 USER2_HEIGHT = int(os.getenv('USER2_HEIGHT', '170'))  # Height (in cm)
@@ -49,12 +50,13 @@ def get_scale_data(sdid, data):
         elif measunit == KG:
             measured = measured / 2
         else:
+            print(measunit)
             raise Exception("Scale is sleeping")
 
         mitdatetime = datetime.strptime(str(int((data[10:12] + data[8:10]), 16)) + " " + str(int((data[12:14]), 16)) +" "+ str(int((data[14:16]), 16)) +" "+ str(int((data[16:18]), 16)) +" "+ str(int((data[18:20]), 16)) +" "+ str(int((data[20:22]), 16)), "%Y %m %d %H %M %S")
         miimpedance = str(int((data[24:26] + data[22:24]), 16))
 
-        return _evaluate_body_parameters(round(measured, 2), str(mitdatetime), miimpedance)
+        return _evaluate_body_parameters(round(measured, 2), str(mitdatetime), int(miimpedance))
 
 
 def _evaluate_body_parameters(weight, mitdatetime, miimpedance):
@@ -63,7 +65,7 @@ def _evaluate_body_parameters(weight, mitdatetime, miimpedance):
         height = USER1_HEIGHT
         age = getAge(USER1_DOB)
         sex = USER1_SEX
-    elif int(weight) < USER2_LT:
+    elif int(weight) < USER2_LT and int(weight) > USER2_GT:
         user = USER2_NAME
         height = USER2_HEIGHT
         age = getAge(USER2_DOB)
@@ -72,5 +74,5 @@ def _evaluate_body_parameters(weight, mitdatetime, miimpedance):
     parameters = {"user": user, "weight": weight, "bmi": lib.getBMI(), "basal_metabolism": lib.getBMR(),
                   "visceral_fat": lib.getVisceralFat(), "lean_body_mass": lib.getLBMCoefficient(),
                   "body_fat": lib.getFatPercentage(), "water": lib.getWaterPercentage(), "bone_mass": lib.getBoneMass(),
-                  "muscle_mass": lib.getMuscleMass(), "protein": lib.getProteinPercentage(), "timestamp": mitdatetime}
+                  "muscle_mass": lib.getMuscleMass(), "protein": lib.getProteinPercentage(), "datetime": mitdatetime}
     return parameters
