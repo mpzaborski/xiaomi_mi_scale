@@ -70,6 +70,9 @@ def _evaluate_body_parameters(weight, mitdatetime, miimpedance):
         height = USER2_HEIGHT
         age = getAge(USER2_DOB)
         sex = USER2_SEX
+    else:
+        print('Unknown person')
+        exit(0)
     lib = BodyMetrics(weight, height, age, sex, miimpedance)
     parameters = {"user": user, "weight": weight, "bmi": lib.getBMI(), "basal_metabolism": lib.getBMR(),
                   "visceral_fat": lib.getVisceralFat(), "lean_body_mass": lib.getLBMCoefficient(),
